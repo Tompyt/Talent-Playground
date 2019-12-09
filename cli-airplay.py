@@ -5,16 +5,6 @@ import sys
 
 argv = sys.argv
 
-# python bash_air.py -t table8 --table_key=fdgasdfgsgd --api-key=423423423423 -p '{"Code":1000,"Name":"abc"}' insert
-# INSERT ES:
-# table%209 appm8kZDSuzxQhvAU keyatpSrifzwpWlIv ins -p "{\"Name\": \"test1000\", \"Code\": 1000"}
-# MOD ES:
-# table%209 appm8kZDSuzxQhvAU keyatpSrifzwpWlIv mod -p "{\"Name\": \"test1000\", \"Code\": 1000"} -target recVsSx3jYHylTLNo
-# DEL ES:
-# table%209 appm8kZDSuzxQhvAU keyatpSrifzwpWlIv del -t recVsSx3jYHylTLNo
-# GET ES:
-##table%209 appm8kZDSuzxQhvAU keyatpSrifzwpWlIv get
-
 parser = argparse.ArgumentParser(description="Command line interface for AirTable")
 parser.add_argument("table", type=str, help="Table name")
 parser.add_argument("base", type=str, help="Base key")
