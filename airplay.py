@@ -5,11 +5,8 @@ import random
 import string
 import requests
 import yaml
-import os
 
-path = os.getcwd()+'\config.yaml'
-
-with open(path, 'r') as file:
+with open(r'config.yaml') as file:
     config = yaml.load(file, Loader=yaml.FullLoader)
 
 
@@ -19,9 +16,8 @@ logger.setLevel(20)
 
 
 class Table:
-    def __init__(self, base_key, table_name, api_key):
+    def __init__(self, base_key, api_key):
         self._base_key = base_key
-        self._table_name = table_name
         self._api_key = api_key
 
     def _get_headers(self):
@@ -30,12 +26,11 @@ class Table:
 
     def _get_url(self):
         logger.debug("Build url for {} method".format(inspect.stack()[1].function))
-        return 'https://api.airtable.com/v0/{}/{}'.format(self._base_key, self._table_name)
+        return 'https://api.airtable.com/v0/{}/{}'.format(self._base_key, config['table_name'])
 
     # @property
     def get(self):
-        logger.info("get table items for {}".format(self._table_name))
-        # import pdb;pdb.set_trace()
+        logger.info("get table items for {}".format(config['table_name']))
         resp = requests.get(self._get_url(), headers=self._get_headers())
         records_nr = len(resp.json()['records'])
         records = {}
@@ -44,12 +39,11 @@ class Table:
             y = resp.json()['records'][rec]['id']
             records.update({y: x})
         res = resp.status_code, records
-        # logger.info(res)
         return res
 
     def insert(self, **fields_dict):
         resp = requests.post(self._get_url(), headers=self._get_headers(), json={'fields': fields_dict})
-        logger.info("Insert record:{} on {}, with response {}".format(fields_dict, self._table_name, resp.status_code))
+        logger.info("Insert record:{} on {}, with response {}".format(fields_dict, config['table_name'], resp.status_code))
         return resp.status_code, resp.json()  # ['id']
 
     def modify(self, target_id, **fields_dict):
@@ -57,16 +51,13 @@ class Table:
         resp = requests.patch('{}/{}'.format(self._get_url(), target_id), headers=self._get_headers(),
                               json={'fields': fields_dict})
         logger.info(
-            "Record:{} modified on {}, with response {}".format(fields_dict, self._table_name, resp.status_code))
+            "Record:{} modified on {}, with response {}".format(fields_dict, config['table_name'], resp.status_code))
         return resp.status_code, resp.json()['id']
 
     def delete(self, target_id):
         resp = requests.delete('{}/{}'.format(self._get_url(), target_id), headers=self._get_headers())
-        logger.info("Record:{} deleted on {}, with response {}".format(target_id, self._table_name, resp.status_code))
+        logger.info("Record:{} deleted on {}, with response {}".format(target_id, config['table_name'], resp.status_code))
         return resp.status_code, resp.json()
-
-
-tbl = Table(config['base_key'], config['table_name'], config['api_key'])
 
 
 def random_str(kind, nr_char):
@@ -98,6 +89,7 @@ def _wrap_insert(x):
 
 
 def test_concurrency():
+    tbl = Table(config['base_key'], config['api_key'])
     p = multiprocessing.Pool(2)
     items = rand_item(20)
     res = p.map(_wrap_insert, [(tbl, item) for item in items])
