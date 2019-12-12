@@ -9,7 +9,7 @@ argv = sys.argv
 parser = argparse.ArgumentParser(description="Command line interface for AirTable")
 parser.add_argument("table_name", help="Table name")
 parser.add_argument("action", help="Chose an action", choices=["ins", "mod", "del", "get"])
-parser.add_argument("-payload", help="Payload dictionary")
+parser.add_argument("-payload", help="Payload dictionary", type=json.loads)
 parser.add_argument("-target_id", help="Target ID")
 parser.add_argument("-c", help="Config file path")
 args = parser.parse_args()
@@ -35,15 +35,12 @@ def actions():
     if chk_config_() is not None:
         tbl = chk_config_()
         if args.action == "ins":
-            dd = json.loads(args.payload)
-            print(tbl.insert(**dd))
+            print(tbl.insert(**args.payload))
         if args.action == "get":
             print(tbl.get())
             return tbl.get()
         if args.action == "mod":
-            pass
-            dd = json.loads(args.payload)
-            print(tbl.modify(args.target_id, **dd))
+            print(tbl.modify(args.target_id, **args.payload))
         if args.action == "del":
             print(tbl.delete(args.target_id))
     else:
