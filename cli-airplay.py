@@ -37,8 +37,8 @@ def actions():
         if args.action == "ins":
             print(tbl.insert(**args.payload))
         if args.action == "get":
-            print(tbl.get())
-            return tbl.get()
+            print(tbl.items())
+            return tbl.items()
         if args.action == "mod":
             print(tbl.modify(args.target_id, **args.payload))
         if args.action == "del":
