@@ -5,14 +5,14 @@ import string
 import requests
 import yaml
 from requests.exceptions import RequestException
-
+from http import HTTPStatus
 
 logging.basicConfig(filename='airtest.log', filemode='w', format='%(asctime)s-%(levelname)s-%(message)s')
 logger = logging.getLogger()
 logger.setLevel(20)
 
-with open(r'config.yaml') as file:
-    config = yaml.load(file, Loader=yaml.FullLoader)
+#with open(r'config.yaml') as file:
+#    config = yaml.load(file, Loader=yaml.FullLoader)
 
 
 class HTTPStatusCodeException(RequestException):
@@ -44,16 +44,16 @@ class Table:
     def insert(self, **fields_dict):
         resp = requests.post(self._get_url(), headers=self._get_headers(), json={'fields': fields_dict})
         logger.info("Insert record:{} on {}, with response {}".format(fields_dict, self._table_name, resp.status_code))
-        if 'error' in resp.json():
-            res = chk_exit_code(resp.status_code)
-        else:
-            res = resp.json()
-        return res
+        if not 200 <= resp.status_code < 300:
+            raise HTTPStatusCodeException(resp.status_code)
+        return resp.json()
 
     def modify(self, target_id, **fields_dict):
         # import pdb;pdb.set_trace()
-        resp = requests.patch('{}/{}'.format(self._get_url(), target_id), headers=self._get_headers(), json={'fields': fields_dict})
-        logger.info("Record:{} modified on {}, with response {}".format(fields_dict, self._table_name, resp.status_code))
+        resp = requests.patch('{}/{}'.format(self._get_url(), target_id), headers=self._get_headers(),
+                              json={'fields': fields_dict})
+        logger.info(
+            "Record:{} modified on {}, with response {}".format(fields_dict, self._table_name, resp.status_code))
         if not 200 <= resp.status_code < 300:
             raise HTTPStatusCodeException(resp.status_code)
         return resp.json()
@@ -95,4 +95,5 @@ def _wrap_insert(x):
     return tbl.insert(**item)
 
 
-tbl = Table(config['base_key'], config['table_name'], config['api_key'])
+#tbl = Table(config['base_key'], config['table_name'], config['api_key'])
+
