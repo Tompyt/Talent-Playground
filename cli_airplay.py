@@ -16,10 +16,11 @@ args = parser.parse_args()
 
 
 def chk_config_():
-    if os.path.isfile('config.yaml'):
-        cf = 'config.yaml'
-    elif '-c' in sys.argv:
+
+    if '-c' in sys.argv:
         cf = args.c
+    elif os.path.isfile('config.yaml'):
+        cf = 'config.yaml'
     else:
         cf = None
         tbl = None

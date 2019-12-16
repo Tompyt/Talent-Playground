@@ -1,14 +1,23 @@
 import inspect
 import logging
-import multiprocessing
 import random
 import string
 import requests
 import yaml
+from requests.exceptions import RequestException
+
 
 logging.basicConfig(filename='airtest.log', filemode='w', format='%(asctime)s-%(levelname)s-%(message)s')
 logger = logging.getLogger()
 logger.setLevel(20)
+
+with open(r'config.yaml') as file:
+    config = yaml.load(file, Loader=yaml.FullLoader)
+
+
+class HTTPStatusCodeException(RequestException):
+    def __init__(self, status):
+        self.status = status
 
 
 class Table:
@@ -28,34 +37,34 @@ class Table:
     def items(self):
         logger.info("get table items for {}".format(self._table_name))
         resp = requests.get(self._get_url(), headers=self._get_headers())
-        records_nr = len(resp.json()['records'])
-        records = {}
-        for rec in range(records_nr):
-            x = resp.json()['records'][rec]['fields']
-            y = resp.json()['records'][rec]['id']
-            records.update({y: x})
-        res = resp.status_code, records
-        return res
+        if not 200 <= resp.status_code < 300:
+            raise HTTPStatusCodeException(resp.status_code)
+        return resp.json()
 
     def insert(self, **fields_dict):
         resp = requests.post(self._get_url(), headers=self._get_headers(), json={'fields': fields_dict})
-        logger.info(
-            "Insert record:{} on {}, with response {}".format(fields_dict, self._table_name, resp.status_code))
-        return resp.status_code, resp.json()  # ['id']
+        logger.info("Insert record:{} on {}, with response {}".format(fields_dict, self._table_name, resp.status_code))
+        if 'error' in resp.json():
+            res = chk_exit_code(resp.status_code)
+        else:
+            res = resp.json()
+        return res
 
     def modify(self, target_id, **fields_dict):
         # import pdb;pdb.set_trace()
-        resp = requests.patch('{}/{}'.format(self._get_url(), target_id), headers=self._get_headers(),
-                              json={'fields': fields_dict})
-        logger.info(
-            "Record:{} modified on {}, with response {}".format(fields_dict, self._table_name, resp.status_code))
-        return resp.status_code, resp.json()['id']
+        resp = requests.patch('{}/{}'.format(self._get_url(), target_id), headers=self._get_headers(), json={'fields': fields_dict})
+        logger.info("Record:{} modified on {}, with response {}".format(fields_dict, self._table_name, resp.status_code))
+        if not 200 <= resp.status_code < 300:
+            raise HTTPStatusCodeException(resp.status_code)
+        return resp.json()
 
     def delete(self, target_id):
         resp = requests.delete('{}/{}'.format(self._get_url(), target_id), headers=self._get_headers())
         logger.info(
             "Record:{} deleted on {}, with response {}".format(target_id, self._table_name, resp.status_code))
-        return resp.status_code, resp.json()
+        if not 200 <= resp.status_code < 300:
+            raise HTTPStatusCodeException(resp.status_code)
+        return resp.json()
 
 
 def random_str(kind, nr_char):
@@ -85,3 +94,5 @@ def _wrap_insert(x):
     tbl, item = x
     return tbl.insert(**item)
 
+
+tbl = Table(config['base_key'], config['table_name'], config['api_key'])
