@@ -5,7 +5,7 @@ import string
 import requests
 import yaml
 from requests.exceptions import RequestException
-from http import HTTPStatus
+
 
 logging.basicConfig(filename='airtest.log', filemode='w', format='%(asctime)s-%(levelname)s-%(message)s')
 logger = logging.getLogger()
@@ -49,7 +49,6 @@ class Table:
         return resp.json()
 
     def modify(self, target_id, **fields_dict):
-        # import pdb;pdb.set_trace()
         resp = requests.patch('{}/{}'.format(self._get_url(), target_id), headers=self._get_headers(),
                               json={'fields': fields_dict})
         logger.info(
@@ -96,4 +95,3 @@ def _wrap_insert(x):
 
 
 #tbl = Table(config['base_key'], config['table_name'], config['api_key'])
-

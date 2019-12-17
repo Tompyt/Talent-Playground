@@ -26,14 +26,14 @@ def chk_config_():
     else:
         cf = None
         tbl = None
-        print("Configuration file not found")
+        print("Configuration file not found", file=sys.stderr)
     if cf is not None:
         with open(cf, 'r') as file:
             config = yaml.load(file, Loader=yaml.FullLoader)
             try:
                 tbl = airplay.Table(config['base_key'], args.table_name, config['api_key'])
             except KeyError:
-                print("Missing attributes in configuration file")
+                print("Missing attributes in configuration file", file=sys.stderr)
                 tbl = None
     return tbl
 
@@ -51,7 +51,7 @@ def actions():
         if args.action == "del":
             print(tbl.delete(args.target_id))
     except airplay.HTTPStatusCodeException as ex:
-        print(HTTPStatus(ex.status).phrase)
+        print(HTTPStatus(ex.status).phrase, file=sys.stderr)
     else:
         pass
 
