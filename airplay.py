@@ -11,8 +11,8 @@ logging.basicConfig(filename='airtest.log', filemode='w', format='%(asctime)s-%(
 logger = logging.getLogger()
 logger.setLevel(20)
 
-#with open(r'config.yaml') as file:
-#    config = yaml.load(file, Loader=yaml.FullLoader)
+with open(r'config.yaml') as file:
+    config = yaml.load(file, Loader=yaml.FullLoader)
 
 
 class HTTPStatusCodeException(RequestException):
@@ -94,4 +94,4 @@ def _wrap_insert(x):
     return tbl.insert(**item)
 
 
-#tbl = Table(config['base_key'], config['table_name'], config['api_key'])
+tbl = Table(config['base_key'], config['table_name'], config['api_key'])

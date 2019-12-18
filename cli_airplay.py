@@ -14,6 +14,7 @@ body_group = parser.add_argument_group(title='Requests body')
 body_group.add_argument("-payload", help="Payload dictionary", type=json.loads)
 body_group.add_argument("-target_id", help="Item id number")
 body_group.add_argument("-c", help="Config file path")
+parser.add_argument("-p", "--prettify", help="Pretty output", type=int)
 args = parser.parse_args()
 
 
@@ -41,17 +42,25 @@ def chk_config_():
 def actions():
     if chk_config_() is not None:
         tbl = chk_config_()
-    try:
-        if args.action == "ins":
-            print(tbl.insert(**args.payload))
-        if args.action == "get":
-            print(tbl.items())
-        if args.action == "mod":
-            print(tbl.modify(args.target_id, **args.payload))
-        if args.action == "del":
-            print(tbl.delete(args.target_id))
-    except airplay.HTTPStatusCodeException as ex:
-        print(HTTPStatus(ex.status).phrase, file=sys.stderr)
+        res = ''
+        try:
+            if args.action == "ins":
+                res = (tbl.insert(**args.payload))
+            if args.action == "get":
+                res = (tbl.items())
+            if args.action == "mod":
+                res = (tbl.modify(args.target_id, **args.payload))
+            if args.action == "del":
+                res = (tbl.delete(args.target_id))
+
+        except airplay.HTTPStatusCodeException as ex:
+            print(HTTPStatus(ex.status).phrase, file=sys.stderr)
+        finally:
+            dumps_kwargs = {}
+            if '-p' in sys.argv or '--prettify' in sys.argv:
+                dumps_kwargs.update({'indent': args.prettify})
+
+            print(json.dumps(res, **dumps_kwargs))
     else:
         pass
 
