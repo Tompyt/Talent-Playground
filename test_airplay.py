@@ -1,21 +1,16 @@
-import airplay
-import multiprocessing
 import random
 import string
+import subprocess
+import pytest
 import yaml
-import cli-airplay
-
+import airplay
+import os
 
 
 with open(r'config.yaml') as file:
     config = yaml.load(file, Loader=yaml.FullLoader)
 
 tbl = airplay.Table(config['base_key'], config['table_name'], config['api_key'])
-
-def test_cli():
-    res = cli-airplay.actions()
-    assert res == 'ciao'
-
 
 
 # generate random items- code
@@ -56,15 +51,37 @@ def _wrap_insert(x):
 #         return res
 
 
+def test_wrong_api_key():
+    tbl0 = airplay.Table(config['base_key'], config['table_name'], 'asf')
+    with pytest.raises(airplay.HTTPStatusCodeException):
+        tbl0.items()
+
+
+def test_config_yaml():
+    import tempfile
+    import shutil
+    temp_dir = tempfile.TemporaryDirectory(prefix='Tom')
+    src = os.getcwd()
+    dst = temp_dir.name
+    fn = 'test_config.yaml'
+    shutil.copyfile(os.path.join(src, fn), os.path.join(dst, 'config1.yaml'))
+    param = ["python", "cli_airplay.py", "Table 9", "get", "-c {}".format(os.path.join(dst, 'config1.yaml'))]
+    cli_test = subprocess.check_output([*param], encoding="utf-8")
+    assert 'records' in cli_test
+    param = ["python", "cli_airplay.py", "Table 9", "get"]
+    cli_test = subprocess.check_output([*param], encoding="utf-8")
+    assert cli_test is not None
+
+
 def test_class():
     rsp0 = tbl.items()
-    assert rsp0[0] == 200
+    assert 'error' not in rsp0
     rsp1 = tbl.insert(Name='Items00', Code=100)
-    assert rsp1[0] == 200
+    assert 'error' not in rsp1
     rsp3 = tbl.items()
-    my_id = list(rsp3[1].keys())[0]
+    my_id = rsp3['records'][0]['id']
     rsp4 = tbl.modify(my_id, Name='RenameItem00', Code=200)
-    assert rsp4[0] == 200
+    assert 'error' not in rsp4
     tbl.delete(my_id)
 
 # def test_all():
