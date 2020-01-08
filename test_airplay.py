@@ -1,16 +1,14 @@
 import random
 import string
-import subprocess
 import pytest
 import yaml
 import airplay
 import os
+import json
+import subprocess
 
 
-with open(r'config.yaml') as file:
-    config = yaml.load(file, Loader=yaml.FullLoader)
-
-tbl = airplay.Table(config['base_key'], config['table_name'], config['api_key'])
+# TODO: be generic about table name and content !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 # generate random items- code
@@ -52,28 +50,73 @@ def _wrap_insert(x):
 
 
 def test_wrong_api_key():
+    with open(r'config.yaml') as file:
+        config = yaml.load(file, Loader=yaml.FullLoader)
     tbl0 = airplay.Table(config['base_key'], config['table_name'], 'asf')
     with pytest.raises(airplay.HTTPStatusCodeException):
         tbl0.items()
 
 
+def test_cli_actions():
+    PL = "{\"Name\": \"test1000\", \"Code\": 1000}"
+    TB = "Table 9"
+
+    # test get
+    param = ['python', 'cli_airplay.py', TB, 'get']
+    cli_test = subprocess.check_output(param, encoding="utf-8")
+    assert 'records' in cli_test
+    # test ins
+    param = ['python', 'cli_airplay.py', TB, 'ins', '-payload', PL]
+    cli_test = subprocess.check_output(param, encoding="utf-8")
+    id_ = json.loads(cli_test)['id']
+    assert 'test1000' in cli_test
+    # test mod
+    param = ['python', 'cli_airplay.py', TB, 'mod', '-payload', PL, '-t', id_]
+    cli_test = subprocess.check_output(param, encoding="utf-8")
+    assert 'test1000' in cli_test
+    # test del
+    param = ['python', 'cli_airplay.py', TB, 'del', '-t', id_]
+    cli_test = subprocess.check_output(param, encoding="utf-8")
+    assert 'deleted' in cli_test
+
+
 def test_config_yaml():
     import tempfile
     import shutil
+    import subprocess
     temp_dir = tempfile.TemporaryDirectory(prefix='Tom')
     src = os.getcwd()
+    print(src)
     dst = temp_dir.name
     fn = 'test_config.yaml'
-    shutil.copyfile(os.path.join(src, fn), os.path.join(dst, 'config1.yaml'))
-    param = ["python", "cli_airplay.py", "Table 9", "get", "-c {}".format(os.path.join(dst, 'config1.yaml'))]
-    cli_test = subprocess.check_output([*param], encoding="utf-8")
+    shutil.copyfile(os.path.join(src, fn), os.path.join(dst, "config1.yaml"))
+    os.chdir(dst)
+    # test with valid alternative conf
+    param = ['python', '{}'.format(os.path.join(src, 'cli_airplay.py')), 'Table 9', 'get', '-c', 'config1.yaml']
+    cli_test = subprocess.check_output(param, encoding="utf-8")
     assert 'records' in cli_test
-    param = ["python", "cli_airplay.py", "Table 9", "get"]
+    # test -h
+
+    param = ['python', '{}'.format(os.path.join(src, 'cli_airplay.py')), '-h']
     cli_test = subprocess.check_output([*param], encoding="utf-8")
-    assert cli_test is not None
+    assert 'help' in cli_test
+
+    # test without valid alternative conf
+    param = ['python', '{}'.format(os.path.join(src, 'cli_airplay.py')), 'Table 9', 'get', '-c {}'.format('C:\\users')]
+    with pytest.raises(subprocess.CalledProcessError):
+        subprocess.check_output([*param], encoding="utf-8")
+
+    os.chdir(src)
 
 
 def test_class():
+    print(os.path.abspath('config.yaml'))
+
+    with open(r'config.yaml') as file:
+        config = yaml.load(file, Loader=yaml.FullLoader)
+
+    tbl = airplay.Table(config['base_key'], config['table_name'], config['api_key'])
+
     rsp0 = tbl.items()
     assert 'error' not in rsp0
     rsp1 = tbl.insert(Name='Items00', Code=100)

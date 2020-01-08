@@ -5,6 +5,11 @@ import sys
 import os
 import yaml
 from http import HTTPStatus
+import logging
+
+logging.basicConfig(filename='cli.log', filemode='w', format='%(asctime)s-%(levelname)s-%(message)s')
+logger = logging.getLogger()
+logger.setLevel(10)
 
 argv = sys.argv
 parser = argparse.ArgumentParser(description="Command line interface for AirTable")
@@ -14,20 +19,25 @@ body_group = parser.add_argument_group(title='Requests body')
 body_group.add_argument("-payload", help="Payload dictionary", type=json.loads)
 body_group.add_argument("-target_id", help="Item id number")
 body_group.add_argument("-c", help="Config file path")
-parser.add_argument("-p", "--prettify", help="Pretty output", type=int)
+parser.add_argument("-pf", "--prettify", help="Pretty output", type=int)
 args = parser.parse_args()
 
-
 def chk_config_():
-
+    cf = None
+    tbl = None
     if '-c' in sys.argv:
-        cf = args.c
+        if os.path.isfile(args.c):
+            cf = args.c
+        else:
+            print("Configuration file not found1", file=sys.stderr)
+            sys.exit(1)
     elif os.path.isfile('config.yaml'):
         cf = 'config.yaml'
     else:
         cf = None
         tbl = None
-        print("Configuration file not found", file=sys.stderr)
+        print("Configuration file not found2", file=sys.stderr)
+        sys.exit(1)
     if cf is not None:
         with open(cf, 'r') as file:
             config = yaml.load(file, Loader=yaml.FullLoader)
@@ -57,7 +67,7 @@ def actions():
             print(HTTPStatus(ex.status).phrase, file=sys.stderr)
         finally:
             dumps_kwargs = {}
-            if '-p' in sys.argv or '--prettify' in sys.argv:
+            if '-pf' in sys.argv or '--prettify' in sys.argv:
                 dumps_kwargs.update({'indent': args.prettify})
 
             print(json.dumps(res, **dumps_kwargs))
