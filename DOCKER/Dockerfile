@@ -1,16 +1,4 @@
-apiVersion: v1
-kind: Pod
-metadata:
-  name: air-pod
-  namespace: tompyt
-  labels:
-    svc: air-proxy
-    db: discogs
-spec:
-  containers:
-    - name: air-pod
-      image: tommy169/air-proxy
-      ports:
-        - name: mycontainer
-          containerPort: 80
-          protocol: TCP
+FROM tiangolo/uwsgi-nginx-flask:python3.7
+COPY ./app /app
+WORKDIR /app
+RUN pip install -r requirements.txt
