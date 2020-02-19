@@ -1,6 +1,6 @@
 jsonschema
 Flask-API.yandex
 flask
-pytest
+pytest==5.3.0
 PyYAML==5.2
 requests==2.22.0
