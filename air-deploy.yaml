@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
         - name: air-container
-          image: tommy169/air-proxy:env5
+          image: tommy169/air-proxy:latest
           env:
           - name: AIRTABLE_BASE_KEY
             valueFrom:
@@ -54,14 +54,14 @@ spec:
               mountPath: /config/base_config.yaml
               subPath: base_config.yaml
           readinessProbe:
-              exec:
-               command:
-                - ls
-                - /config/base_config.yaml 
+            exec:
+            command:
+              - ls
+              - /config/base_config.yaml 
       volumes:                                 
-      - name: config
-        configMap:
-         name: air-config
+        - name: config
+          configMap:
+            name: air-config
 
 
 
