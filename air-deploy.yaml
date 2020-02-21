@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: air-auto-svc
+spec:
+  type: LoadBalancer
+  selector:                        
+    db: discogs       
+    svc: air-proxy                   
+  ports:
+  - port: 80
+    targetPort: 8080
+#creo servizio per esporre pod  internamente con label db\svc...
+---
+apiVersion: apps/v1beta1          
+kind: Deployment                  
+metadata:
+  name: air-auto-dp                   
+spec:
+  minReadySeconds: 10
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  replicas: 3
+  template:
+    metadata:
+      name: air-rs
+      labels:
+        db: discogs       
+        svc: air-proxy
+    spec:
+      containers:
+        - name: air-container
+          image: tommy169/air-proxy:env5
+          env:
+          - name: AIRTABLE_BASE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: air-secret
+                key: base_key
+          - name: AIRTABLE_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: air-secret
+                key: api_key           
+          ports:
+            - name: mycontainer
+              containerPort: 80
+              protocol: TCP
+          volumeMounts:                          
+            - name: config                           
+              mountPath: /config/base_config.yaml
+              subPath: base_config.yaml
+          readinessProbe:
+              exec:
+               command:
+                - ls
+                - /config/base_config.yaml 
+      volumes:                                 
+      - name: config
+        configMap:
+         name: air-config
+
+
+
+#creo configmap e secret da file
+#k create configmap air-config --from-file=base_config.yaml
+#k create secret generic air-secret --from-file=base_config.yaml
+#k create secret generic air-secret --from-literal=base_key=appRZ5mLEQwaJ78Dr --from-literal=api_key=keyatpSrifzwpWlIv
+
